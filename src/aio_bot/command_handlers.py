@@ -62,17 +62,16 @@ async def handle_callbacks(callback: types.CallbackQuery, api_client: JsonPlaceh
 async def get_users(
         message: types.Message,
         api_client: JsonPlaceholderClient,
+        user_repo: UserRepository
 ):
     try:
         users = await api_client.get_users()
 
-        # # Сохраняем каждого пользователя
-        # for user in users:
-        #     await user_repo.save_user(user)
+        result = await user_repo.save_users(users)
 
         # Формируем ответ
         response = "\n".join(f"{u.name} - {u.email}" for u in users[:5]) # Берём первых 5 для примера
-        await message.answer(f"Первые 5 из сохраненных пользователей:\n{response}")
+        await message.answer(f"Сoхраненно {result} пользователей. \n Первые 5 из сохраненных пользователей:\n{response}")
 
     except Exception as e:
         await message.answer(f"Ошибка: {str(e)}")

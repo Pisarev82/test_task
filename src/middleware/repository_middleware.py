@@ -12,5 +12,5 @@ class RepositoryMiddleware(BaseMiddleware):
         data: dict[str, Any]
     ) -> Any:
         async with db.session_factory() as session:
-            data["user_repo"] = UserRepository(session)  # Создаем и инжектируем репозиторий
+            data["user_repo"] = UserRepository(session)
             return await handler(event, data)

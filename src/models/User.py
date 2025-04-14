@@ -1,11 +1,10 @@
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
+from .base import Base
 
 
 # sqlalchemy
-Base = declarative_base()
 
 class UserSQLAlchemy(Base):
     __tablename__ = 'users'
@@ -19,7 +18,7 @@ class UserSQLAlchemy(Base):
 
     @staticmethod
     def to_pydantic(self):
-        return UserPyDantic(
+        return UserPydantic(
             id=self.id,
             name=self.name,
             username=self.username,
@@ -30,8 +29,8 @@ class UserSQLAlchemy(Base):
 
 
 #pydantic
-class UserPyDantic (BaseModel):
-    id: Optional[int] = Field(default=None, alias="_id")
+class UserPydantic (BaseModel):
+    id: int
     name: str
     username: str
     email: str

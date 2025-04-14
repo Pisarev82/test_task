@@ -1,1 +1,2 @@
-from .User import UserPyDantic, UserSQLAlchemy
+from .base import Base
+from .User import UserPydantic, UserSQLAlchemy
