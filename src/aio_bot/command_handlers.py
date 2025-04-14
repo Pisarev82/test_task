@@ -3,9 +3,14 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.enums import ParseMode
 from aiogram import F, types
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pydantic import BaseModel
 import logging
+
+
 from src.api_client import JsonPlaceholderClient
+from src.repositories.user_base_repository import UserRepository
+
 
 class UserResponse(BaseModel):
     user_id: int
@@ -18,37 +23,59 @@ async def cmd_start(message: Message, local_run: bool):
     text = "👋 Я эхобот на вебхуках!"
     if local_run:
         text = "👋 Я эхобот на локальном компьютере (Лонг Полинг)!"
-    await message.answer(text)
+
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        types.InlineKeyboardButton(
+            text="📋 Получить пользователей",
+            callback_data="get_users"
+        ),
+        types.InlineKeyboardButton(
+            text="ℹ️ О боте",
+            callback_data="about"
+        )
+    )
+
+    await message.answer(
+        text,
+        reply_markup=builder.as_markup(),
+                         )
+
+async def handle_callbacks(callback: types.CallbackQuery, api_client: JsonPlaceholderClient):
+    """Обработчик нажатий на кнопки"""
+    if callback.data == "get_users":
+        users = await api_client.get_users()
+        response = "\n".join(f"{user.name} - {user.email}" for user in users[:3])
+        await callback.message.edit_text(
+            f"Последние пользователи:\n{response}",
+            reply_markup=callback.message.reply_markup
+        )
+    elif callback.data == "about":
+        await callback.message.edit_text(
+            "Это тестовый бот для работы с API\n"
+            "Использует JSON Placeholder",
+            reply_markup=callback.message.reply_markup
+        )
+    await callback.answer()
 
 
 async def get_users(
         message: types.Message,
-        api_client: JsonPlaceholderClient
+        api_client: JsonPlaceholderClient,
 ):
     try:
         users = await api_client.get_users()
 
-        # Преобразуем в нашу схему ответа
-        response_data = [
-            UserResponse(
-                user_id=user.id,
-                full_name=user.name,
-                contact_email=user.email
-            ) for user in users
-        ]
+        # # Сохраняем каждого пользователя
+        # for user in users:
+        #     await user_repo.save_user(user)
 
-        # Форматируем ответ
-        response_text = "\n".join(
-            f"👤 {user.full_name} (ID: {user.user_id})\n"
-            f"📧 {user.contact_email}\n"
-            for user in response_data[:5]  # Выводим первые 5 пользователей
-        )
-
-        await message.answer(response_text)
+        # Формируем ответ
+        response = "\n".join(f"{u.name} - {u.email}" for u in users[:5]) # Берём первых 5 для примера
+        await message.answer(f"Первые 5 из сохраненных пользователей:\n{response}")
 
     except Exception as e:
-        logging.error(f"API error: {e}")
-        await message.answer("⚠ Ошибка при получении данных")
+        await message.answer(f"Ошибка: {str(e)}")
 
 async def echo_text(message: Message):
     logging.info(f"Пользователь {message.from_user.username} отправил сообщение: {message.text}")
@@ -57,4 +84,6 @@ async def echo_text(message: Message):
 
 def register_handlers(dp: Dispatcher):
     dp.message.register(cmd_start, Command("start"))
+    dp.callback_query.register(handle_callbacks, F.data.in_(["get_users", "about"]))
+    dp.message.register(get_users, Command("users"))
     dp.message.register(echo_text, F.text)

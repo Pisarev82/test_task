@@ -8,6 +8,8 @@ from aiohttp import web
 from config import BOT_TOKEN, local_run
 from aio_bot.command_handlers import register_handlers
 from middleware import ConfigMiddleware, ApiMiddleware
+from src.middleware.repository_middleware import RepositoryMiddleware
+from src.repositories import db, create_tables
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,10 +21,23 @@ dp.update.middleware(ConfigMiddleware(local_run))
 dp.update.middleware(ApiMiddleware())
 register_handlers(dp)
 
+async def on_startup():
+
+    try:
+        logging.info("Database connection established")
+        dp.update.middleware(RepositoryMiddleware())
+        register_handlers(dp)
+        await create_tables(db.engine)
+    except Exception as e:
+        logging.error(f"Ошибка: {e}")
+        await db.engine.dispose()
+        exit(1)
+
 # Запуск для сервера на вебхуках
 async def main_webhook():
     from config import WEBHOOK_URL, WEB_SERVER_HOST, WEB_SERVER_PORT, WEBHOOK_SECRET, WEBHOOK_PATH
 
+    await on_startup()
     try:
         await bot.set_webhook(
             url=WEBHOOK_URL,
@@ -50,6 +65,7 @@ async def main_webhook():
 
 # Запуск для тестов на лонг поллинге
 async def main_polling():
+    await on_startup()
     # Удаляем вебхук для работы в режиме поллинга
     await bot.delete_webhook()
     await dp.start_polling(bot)
