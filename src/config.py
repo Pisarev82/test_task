@@ -7,6 +7,7 @@ import sys
 from urllib.parse import urlparse
 from contextlib import closing
 from dotenv import load_dotenv
+from pathlib import Path
 
 
 load_dotenv("../.env")
@@ -21,6 +22,9 @@ POSTGRES_DB=os.getenv("POSTGRES_DB")
 POSTGRES_HOST=os.getenv("POSTGRES_HOST")
 POSTGRES_PORT=os.getenv("POSTGRES_PORT")
 POSTGRES_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+# Путь к файлу учетных данных
+BASE_DIR = Path(__file__).resolve().parent.parent
+GOOGLE_CREDS_FILE = os.path.join(BASE_DIR, os.getenv("GOOGLE_CREDS_FILE"))
 
 
 # Определяем где запущена программа

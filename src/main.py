@@ -5,9 +5,10 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 
 from aiohttp import web
 
-from config import BOT_TOKEN, local_run
+from config import BOT_TOKEN, local_run, GOOGLE_CREDS_FILE
 from aio_bot.command_handlers import register_handlers
 from middleware import ConfigMiddleware, ApiMiddleware
+from src.api_client.GoogleSheetsExporter import GoogleSheetsExporter
 from src.middleware.repository_middleware import RepositoryMiddleware
 from src.repositories import db, create_tables
 
@@ -17,12 +18,12 @@ logging.basicConfig(level=logging.INFO)
 # Инициализация бота, диспетчера и обработчиков
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+google_exporter = GoogleSheetsExporter(GOOGLE_CREDS_FILE)
 dp.update.middleware(ConfigMiddleware(local_run))
-dp.update.middleware(ApiMiddleware())
+dp.update.middleware(ApiMiddleware(google_exporter))
 register_handlers(dp)
 
 async def on_startup():
-
     try:
         logging.info("Database connection established")
         dp.update.middleware(RepositoryMiddleware())
@@ -32,6 +33,7 @@ async def on_startup():
         logging.error(f"Ошибка: {e}")
         await db.engine.dispose()
         exit(1)
+
 
 # Запуск для сервера на вебхуках
 async def main_webhook():
