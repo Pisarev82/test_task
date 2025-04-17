@@ -78,7 +78,8 @@ async def handle_callbacks(
         except Exception as e:
             await callback.message.edit_text(f"Ошибка: {str(e)}")
     elif callback.data == "save_to_gsheets":
-        text = "✅ Данные успешно экспортированы в Google Sheets"
+        text = ("✅ Данные успешно экспортированы в Google Sheets \n"
+                "https://docs.google.com/spreadsheets/d/1DvXeVBw0TLg8Gm8ZZEheSKoIOTLbJyXDTQd6wsyvx0s/edit?usp=sharing")
         try:
             await callback.answer("⏳ Сохраняем в Google Sheets...")
             users = await user_repo.get_all_users()
@@ -103,7 +104,8 @@ async def handle_callbacks(
         await callback.message.edit_text(
             "Это тестовый бот для работы с API\n"
             "Использует JSON Placeholder\n"
-            "Разработчик Писарев Николай  @Nikolay_Pisarev\n",
+            "Разработчик Писарев Николай  @Nikolay_Pisarev\n"
+            "Исходный код https://github.com/Pisarev82/test_task.git",
             reply_markup=callback.message.reply_markup
         )
     await callback.answer()
